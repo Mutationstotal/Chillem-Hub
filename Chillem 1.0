@@ -418,6 +418,8 @@ end
 updateDisplay()
 
 
+-- Math Quiz GUI with Difficulty, Answer Box, and Exit Button
+
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
@@ -442,6 +444,19 @@ Title.Font = Enum.Font.GothamBold
 Title.TextSize = 22
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.BackgroundTransparency = 1
+
+-- Exit Button
+local ExitButton = Instance.new("TextButton", Frame)
+ExitButton.Size = UDim2.new(0, 30, 0, 30)
+ExitButton.Position = UDim2.new(1, -35, 0, 5)
+ExitButton.Text = "❌"
+ExitButton.Font = Enum.Font.GothamBold
+ExitButton.TextSize = 18
+ExitButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ExitButton.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+ExitButton.MouseButton1Click:Connect(function()
+	ScreenGui:Destroy()
+end)
 
 -- Difficulty Dropdown
 local Difficulty = "Easy"
@@ -486,21 +501,21 @@ Submit.TextSize = 18
 Submit.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
 Submit.TextColor3 = Color3.new(1, 1, 1)
 
--- Retry Variables
+-- Quiz Logic
 local tries = 5
 local correctAnswer = nil
-
--- Dropdown Handling
-local difficulties = {"Easy", "Medium", "Hard"}
+local difficulties = { "Easy", "Medium", "Hard" }
 local currentDiffIndex = 1
+
+-- Dropdown Click Logic
 Dropdown.MouseButton1Click:Connect(function()
-	currentDiffIndex = currentDiffIndex + 1
+	currentDiffIndex += 1
 	if currentDiffIndex > #difficulties then currentDiffIndex = 1 end
 	Difficulty = difficulties[currentDiffIndex]
 	Dropdown.Text = "🎯 Difficulty: " .. Difficulty
 end)
 
--- Generate Question Based on Difficulty
+-- Generate Questions
 local function newQuestion()
 	local a, b, op
 	if Difficulty == "Easy" then
@@ -555,5 +570,5 @@ Submit.MouseButton1Click:Connect(function()
 	end
 end)
 
--- First Question
+-- First question on load
 newQuestion()
