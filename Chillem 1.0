@@ -417,85 +417,7 @@ GamesTab:AddDropdown({
 end
 updateDisplay()
 
-	local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-
--- GUI Container
-local TextQuizGUI = Instance.new("ScreenGui")
-TextQuizGUI.Name = "TextQuizGUI"
-TextQuizGUI.Parent = PlayerGui
-TextQuizGUI.ResetOnSpawn = false
-
--- Main Frame
-local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 350, 0, 180)
-Frame.Position = UDim2.new(0.5, -175, 0.5, -90)
-Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-Frame.BorderSizePixel = 0
-Frame.Parent = TextQuizGUI
-
--- Question Label
-local Question = Instance.new("TextLabel")
-Question.Size = UDim2.new(1, -20, 0, 60)
-Question.Position = UDim2.new(0, 10, 0, 10)
-Question.BackgroundTransparency = 1
-Question.Font = Enum.Font.GothamBold
-Question.TextSize = 24
-Question.TextColor3 = Color3.new(1, 1, 1)
-Question.Text = "What is 3 + 4?"
-Question.TextWrapped = true
-Question.Parent = Frame
-
--- Answer Box
-local AnswerBox = Instance.new("TextBox")
-AnswerBox.Size = UDim2.new(1, -20, 0, 40)
-AnswerBox.Position = UDim2.new(0, 10, 0, 80)
-AnswerBox.PlaceholderText = "Type your answer..."
-AnswerBox.Text = ""
-AnswerBox.Font = Enum.Font.Gotham
-AnswerBox.TextSize = 20
-AnswerBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-AnswerBox.TextColor3 = Color3.new(1, 1, 1)
-AnswerBox.Parent = Frame
-
--- Submit Button
-local Submit = Instance.new("TextButton")
-Submit.Size = UDim2.new(0.5, -15, 0, 35)
-Submit.Position = UDim2.new(0, 10, 0, 130)
-Submit.Text = "✅ Submit"
-Submit.Font = Enum.Font.GothamBold
-Submit.TextSize = 18
-Submit.BackgroundColor3 = Color3.fromRGB(0, 130, 200)
-Submit.TextColor3 = Color3.new(1, 1, 1)
-Submit.Parent = Frame
-
--- Hide/Show Button
-local Toggle = Instance.new("TextButton")
-Toggle.Size = UDim2.new(0, 160, 0, 30)
-Toggle.Position = UDim2.new(0, 20, 0, 80)
-Toggle.Text = "📘 Show/Hide Math Quiz"
-Toggle.Font = Enum.Font.GothamBold
-Toggle.TextSize = 14
-Toggle.TextColor3 = Color3.new(1, 1, 1)
-Toggle.BackgroundColor3 = Color3.fromRGB(40, 40, 80)
-Toggle.Parent = PlayerGui
-
-Toggle.MouseButton1Click:Connect(function()
-	TextQuizGUI.Enabled = not TextQuizGUI.Enabled
-end)
-
--- Example simple check logic
-local correctAnswer = 7
-Submit.MouseButton1Click:Connect(function()
-	local input = tonumber(AnswerBox.Text)
-	if input == correctAnswer then
-		Question.Text = "✅ Correct!"
-	else
-		Question.Text = "❌ Try again."
-	end
-end)
-local ToggleBtn = Instance.new("TextButton")
+	local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "ToggleMathQuiz"
 ToggleBtn.Parent = PlayerGui
 ToggleBtn.Text = "📘 Show/Hide Math Quiz"
@@ -513,6 +435,92 @@ ToggleBtn.MouseButton1Click:Connect(function()
 		MathQuizGUI.Enabled = not MathQuizGUI.Enabled
 	end
 end)
+
+-- Start Math Quiz
+local function startQuiz()
+	if _G.MiniGameRunning then
+		OrionLib:MakeNotification({
+			Name = "Mini-Game",
+			Content = "Finish your current game first!",
+			Time = 3
+		})
+		return
+	end
+
+	_G.MiniGameRunning = true
+	MathQuizGUI = Instance.new("ScreenGui", PlayerGui)
+	MathQuizGUI.Name = "MathQuizGUI"
+	MathQuizGUI.ResetOnSpawn = false
+
+	local Frame = Instance.new("Frame", MathQuizGUI)
+	Frame.Size = UDim2.new(0, 420, 0, 280)
+	Frame.Position = UDim2.new(0.5, -210, 0.5, -140)
+	Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	Frame.BorderSizePixel = 0
+
+	local Title = Instance.new("TextLabel", Frame)
+	Title.Size = UDim2.new(1, 0, 0, 30)
+	Title.Position = UDim2.new(0, 0, 0, 5)
+	Title.Text = "📘 Math Quiz"
+	Title.Font = Enum.Font.GothamBold
+	Title.TextSize = 22
+	Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+	Title.BackgroundTransparency = 1
+
+	local Difficulty = "Easy"
+	local difficulties = {"Easy", "Medium", "Hard"}
+	local currentDiffIndex = 1
+
+	local Dropdown = Instance.new("TextButton", Frame)
+	Dropdown.Size = UDim2.new(0.6, 0, 0, 30)
+	Dropdown.Position = UDim2.new(0.2, 0, 0, 40)
+	Dropdown.Text = "🎯 Difficulty: Easy"
+	Dropdown.Font = Enum.Font.Gotham
+	Dropdown.TextSize = 18
+	Dropdown.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+	Dropdown.TextColor3 = Color3.new(1, 1, 1)
+
+	Dropdown.MouseButton1Click:Connect(function()
+		currentDiffIndex += 1
+		if currentDiffIndex > #difficulties then currentDiffIndex = 1 end
+		Difficulty = difficulties[currentDiffIndex]
+		Dropdown.Text = "🎯 Difficulty: " .. Difficulty
+	end)
+
+	local QuestionLabel = Instance.new("TextLabel", Frame)
+	QuestionLabel.Size = UDim2.new(1, -20, 0, 40)
+	QuestionLabel.Position = UDim2.new(0, 10, 0, 85)
+	QuestionLabel.Text = "Click Submit to Start!"
+	QuestionLabel.Font = Enum.Font.GothamBold
+	QuestionLabel.TextSize = 20
+	QuestionLabel.TextColor3 = Color3.new(1, 1, 1)
+	QuestionLabel.BackgroundTransparency = 1
+	QuestionLabel.TextWrapped = true
+
+	local AnswerBox = Instance.new("TextBox", Frame)
+	AnswerBox.Size = UDim2.new(0.8, 0, 0, 30)
+	AnswerBox.Position = UDim2.new(0.1, 0, 0, 130)
+	AnswerBox.PlaceholderText = "Enter your answer..."
+	AnswerBox.Text = ""
+	AnswerBox.Font = Enum.Font.Gotham
+	AnswerBox.TextSize = 18
+	AnswerBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	AnswerBox.TextColor3 = Color3.new(1, 1, 1)
+
+	local Submit = Instance.new("TextButton", Frame)
+	Submit.Size = UDim2.new(0.4, 0, 0, 30)
+	Submit.Position = UDim2.new(0.3, 0, 0, 180)
+	Submit.Text = "✅ Submit"
+	Submit.Font = Enum.Font.GothamBold
+	Submit.TextSize = 18
+	Submit.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+	Submit.TextColor3 = Color3.new(1, 1, 1)
+
+	local correctAnswer, tries = nil, 5
+
+	local function newQuestion()
+		local a, b, op
+		if Difficulty == "Easy" then
 			a, b, op = math.random(1, 10), math.random(1, 10), "+"
 			correctAnswer = a + b
 		elseif Difficulty == "Medium" then
@@ -579,3 +587,17 @@ end
 
 -- Start Quiz from GUI
 startQuiz()
+
+-- Chat quit command
+LocalPlayer.Chatted:Connect(function(msg)
+	if msg:lower() == "quit" and _G.MiniGameRunning then
+		local gui = PlayerGui:FindFirstChild("MathQuizGUI")
+		if gui then gui:Destroy() end
+		_G.MiniGameRunning = false
+		OrionLib:MakeNotification({
+			Name = "Math Quiz",
+			Content = "You quit the game.",
+			Time = 3
+		})
+	end
+end)
