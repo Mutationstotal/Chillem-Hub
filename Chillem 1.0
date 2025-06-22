@@ -507,27 +507,6 @@ elseif gameChoice == "🧮 Math Quiz" then
         end)
     end
 
-
-    startMathQuiz()elseif gameChoice == "🧮 Math Quiz" then
-            local a, b = math.random(1, 20), math.random(1, 20)
-            OrionLib:MakeNotification({Name = "Math", Content = "What is " .. a .. " + " .. b .. "?", Time = 6})
-            local conn
-            conn = LocalPlayer.Chatted:Connect(function(msg)
-                if tonumber(msg) == a + b then
-                    OrionLib:MakeNotification({Name = "✅ Correct!", Content = "Nice job!", Time = 3})
-                    scoreData.MathCorrect += 1
-                    updateDisplay()
-                    conn:Disconnect()
-                    endGame()
-                else
-                    OrionLib:MakeNotification({Name = "❌ Wrong", Content = "Try again!", Time = 2})
-                end
-            end)
-        else
-            endGame()
-        end
-    end
-    
 })GamesTab:AddButton({
     Name = "💾 Save Scores",
     Callback = function()
