@@ -416,6 +416,85 @@ GamesTab:AddDropdown({
     end
 end
 updateDisplay()
+
+	local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- GUI Container
+local TextQuizGUI = Instance.new("ScreenGui")
+TextQuizGUI.Name = "TextQuizGUI"
+TextQuizGUI.Parent = PlayerGui
+TextQuizGUI.ResetOnSpawn = false
+
+-- Main Frame
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 350, 0, 180)
+Frame.Position = UDim2.new(0.5, -175, 0.5, -90)
+Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Frame.BorderSizePixel = 0
+Frame.Parent = TextQuizGUI
+
+-- Question Label
+local Question = Instance.new("TextLabel")
+Question.Size = UDim2.new(1, -20, 0, 60)
+Question.Position = UDim2.new(0, 10, 0, 10)
+Question.BackgroundTransparency = 1
+Question.Font = Enum.Font.GothamBold
+Question.TextSize = 24
+Question.TextColor3 = Color3.new(1, 1, 1)
+Question.Text = "What is 3 + 4?"
+Question.TextWrapped = true
+Question.Parent = Frame
+
+-- Answer Box
+local AnswerBox = Instance.new("TextBox")
+AnswerBox.Size = UDim2.new(1, -20, 0, 40)
+AnswerBox.Position = UDim2.new(0, 10, 0, 80)
+AnswerBox.PlaceholderText = "Type your answer..."
+AnswerBox.Text = ""
+AnswerBox.Font = Enum.Font.Gotham
+AnswerBox.TextSize = 20
+AnswerBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+AnswerBox.TextColor3 = Color3.new(1, 1, 1)
+AnswerBox.Parent = Frame
+
+-- Submit Button
+local Submit = Instance.new("TextButton")
+Submit.Size = UDim2.new(0.5, -15, 0, 35)
+Submit.Position = UDim2.new(0, 10, 0, 130)
+Submit.Text = "✅ Submit"
+Submit.Font = Enum.Font.GothamBold
+Submit.TextSize = 18
+Submit.BackgroundColor3 = Color3.fromRGB(0, 130, 200)
+Submit.TextColor3 = Color3.new(1, 1, 1)
+Submit.Parent = Frame
+
+-- Hide/Show Button
+local Toggle = Instance.new("TextButton")
+Toggle.Size = UDim2.new(0, 160, 0, 30)
+Toggle.Position = UDim2.new(0, 20, 0, 80)
+Toggle.Text = "📘 Show/Hide Math Quiz"
+Toggle.Font = Enum.Font.GothamBold
+Toggle.TextSize = 14
+Toggle.TextColor3 = Color3.new(1, 1, 1)
+Toggle.BackgroundColor3 = Color3.fromRGB(40, 40, 80)
+Toggle.Parent = PlayerGui
+
+Toggle.MouseButton1Click:Connect(function()
+	TextQuizGUI.Enabled = not TextQuizGUI.Enabled
+end)
+
+-- Example simple check logic
+local correctAnswer = 7
+Submit.MouseButton1Click:Connect(function()
+	local input = tonumber(AnswerBox.Text)
+	if input == correctAnswer then
+		Question.Text = "✅ Correct!"
+	else
+		Question.Text = "❌ Try again."
+	end
+end)
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name = "ToggleMathQuiz"
 ToggleBtn.Parent = PlayerGui
@@ -600,274 +679,3 @@ LocalPlayer.Chatted:Connect(function(msg)
 		})
 	end
 end)
-elseif gameChoice == "🧮 Math Quiz" then
-    local function startMathQuiz(difficulty)
-        local a, b = 0, 0
-        local question, answer
-
-        if difficulty == "Easy" then
-            a, b = math.random(1, 10), math.random(1, 10)
-            question = a .. " + " .. b
-            answer = a + b
-        elseif difficulty == "Medium" then
-            a, b = math.random(1, 25), math.random(1, 25)
-            if math.random(1,2) == 1 then
-                question = a .. " + " .. b
-                answer = a + b
-            else
-                question = a .. " - " .. b
-                answer = a - b
-            end
-        elseif difficulty == "Hard" then
-            a, b = math.random(1, 50), math.random(1, 10)
-            local op = math.random(1, 3)
-            if op == 1 then
-                question = a .. " + " .. b
-                answer = a + b
-            elseif op == 2 then
-                question = a .. " - " .. b
-                answer = a - b
-            else
-                question = a .. " × " .. b
-                answer = a * b
-            end
-        end
-
-        OrionLib:MakeNotification({Name = "Math", Content = "What is " .. question .. "?", Time = 6})
-        local conn
-        conn = LocalPlayer.Chatted:Connect(function(msg)
-            if tonumber(msg) == answer then
-                OrionLib:MakeNotification({Name = "✅ Correct!", Content = "Nice job!", Time = 3})
-                scoreData.MathCorrect += 1
-                updateDisplay()
-                conn:Disconnect()
-
-                -- Replay prompt
-                local gui = Instance.new("ScreenGui", game.CoreGui)
-                gui.Name = "MathReplayPrompt"
-                local frame = Instance.new("Frame", gui)
-                frame.Size = UDim2.new(0, 300, 0, 150)
-                frame.Position = UDim2.new(0.5, -150, 0.5, -75)
-                frame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-
-                local label = Instance.new("TextLabel", frame)
-                label.Size = UDim2.new(1, 0, 0.4, 0)
-                label.Position = UDim2.new(0, 0, 0, 0)
-                label.BackgroundTransparency = 1
-                label.Font = Enum.Font.GothamBold
-                label.Text = "Play Again?"
-                label.TextColor3 = Color3.new(1, 1, 1)
-                label.TextSize = 22
-
-                local yes = Instance.new("TextButton", frame)
-                yes.Size = UDim2.new(0.4, 0, 0.4, 0)
-                yes.Position = UDim2.new(0.1, 0, 0.5, 0)
-                yes.Text = "Yes"
-                yes.Font = Enum.Font.Gotham
-                yes.TextSize = 20
-                yes.TextColor3 = Color3.new(1,1,1)
-                yes.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
-
-                local no = Instance.new("TextButton", frame)
-                no.Size = UDim2.new(0.4, 0, 0.4, 0)
-                no.Position = UDim2.new(0.5, 0, 0.5, 0)
-                no.Text = "No"
-                no.Font = Enum.Font.Gotham
-                no.TextSize = 20
-                no.TextColor3 = Color3.new(1,1,1)
-                no.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
-
-                yes.MouseButton1Click:Connect(function()
-                    gui:Destroy()
-                    startMathQuiz(difficulty)
-                end)
-
-                no.MouseButton1Click:Connect(function()
-                    gui:Destroy()
-                    endGame()
-                end)
-            else
-                OrionLib:MakeNotification({Name = "❌ Wrong", Content = "Try again!", Time = 2})
-            end
-        end)
-    end
-
-
-    startMathQuiz()elseif gameChoice == "🧮 Math Quiz" then
-            local a, b = math.random(1, 20), math.random(1, 20)
-            OrionLib:MakeNotification({Name = "Math", Content = "What is " .. a .. " + " .. b .. "?", Time = 6})
-            local conn
-            conn = LocalPlayer.Chatted:Connect(function(msg)
-                if tonumber(msg) == a + b then
-                    OrionLib:MakeNotification({Name = "✅ Correct!", Content = "Nice job!", Time = 3})
-                    scoreData.MathCorrect += 1
-                    updateDisplay()
-                    conn:Disconnect()
-                    endGame()
-                else
-                    OrionLib:MakeNotification({Name = "❌ Wrong", Content = "Try again!", Time = 2})
-                end
-            end)
-        else
-            endGame()
-        end
-    end
--- Prevent launching if already running
-if _G.MiniGameRunning then
-	warn("You must finish your current mini-game first!")
-	return
-end
-_G.MiniGameRunning = true
-
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-
--- GUI Setup
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "MathQuizGUI"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-
-local Frame = Instance.new("Frame", ScreenGui)
-Frame.Size = UDim2.new(0, 420, 0, 280)
-Frame.Position = UDim2.new(0.5, -210, 0.5, -140)
-Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-Frame.BorderSizePixel = 0
-
--- Title
-local Title = Instance.new("TextLabel", Frame)
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.Position = UDim2.new(0, 0, 0, 5)
-Title.Text = "📘 Math Quiz"
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 22
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.BackgroundTransparency = 1
-
--- Exit Button
-local ExitButton = Instance.new("TextButton", Frame)
-ExitButton.Size = UDim2.new(0, 30, 0, 30)
-ExitButton.Position = UDim2.new(1, -35, 0, 5)
-ExitButton.Text = "❌"
-ExitButton.Font = Enum.Font.GothamBold
-ExitButton.TextSize = 18
-ExitButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ExitButton.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
-ExitButton.MouseButton1Click:Connect(function()
-	-- RESET game state before destroying
-	_G.MiniGameRunning = false
-	ScreenGui:Destroy()
-end)
-
--- Difficulty Dropdown
-local Difficulty = "Easy"
-local difficulties = { "Easy", "Medium", "Hard" }
-local currentDiffIndex = 1
-
-local Dropdown = Instance.new("TextButton", Frame)
-Dropdown.Size = UDim2.new(0.6, 0, 0, 30)
-Dropdown.Position = UDim2.new(0.2, 0, 0, 40)
-Dropdown.Text = "🎯 Difficulty: Easy"
-Dropdown.Font = Enum.Font.Gotham
-Dropdown.TextSize = 18
-Dropdown.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-Dropdown.TextColor3 = Color3.new(1, 1, 1)
-
-Dropdown.MouseButton1Click:Connect(function()
-	currentDiffIndex += 1
-	if currentDiffIndex > #difficulties then currentDiffIndex = 1 end
-	Difficulty = difficulties[currentDiffIndex]
-	Dropdown.Text = "🎯 Difficulty: " .. Difficulty
-end)
-
--- Question Display
-local QuestionLabel = Instance.new("TextLabel", Frame)
-QuestionLabel.Size = UDim2.new(1, -20, 0, 40)
-QuestionLabel.Position = UDim2.new(0, 10, 0, 85)
-QuestionLabel.Text = "Click Submit to Start!"
-QuestionLabel.Font = Enum.Font.GothamBold
-QuestionLabel.TextSize = 20
-QuestionLabel.TextColor3 = Color3.new(1, 1, 1)
-QuestionLabel.BackgroundTransparency = 1
-QuestionLabel.TextWrapped = true
-
--- Answer Box
-local AnswerBox = Instance.new("TextBox", Frame)
-AnswerBox.Size = UDim2.new(0.8, 0, 0, 30)
-AnswerBox.Position = UDim2.new(0.1, 0, 0, 130)
-AnswerBox.PlaceholderText = "Enter your answer..."
-AnswerBox.Text = ""
-AnswerBox.Font = Enum.Font.Gotham
-AnswerBox.TextSize = 18
-AnswerBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-AnswerBox.TextColor3 = Color3.new(1, 1, 1)
-
--- Submit Button
-local Submit = Instance.new("TextButton", Frame)
-Submit.Size = UDim2.new(0.4, 0, 0, 30)
-Submit.Position = UDim2.new(0.3, 0, 0, 180)
-Submit.Text = "✅ Submit"
-Submit.Font = Enum.Font.GothamBold
-Submit.TextSize = 18
-Submit.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
-Submit.TextColor3 = Color3.new(1, 1, 1)
-
--- Logic
-local tries = 5
-local correctAnswer = nil
-
-local function newQuestion()
-	local a, b, op
-	if Difficulty == "Easy" then
-		a, b = math.random(1, 10), math.random(1, 10)
-		op = "+"
-		correctAnswer = a + b
-	elseif Difficulty == "Medium" then
-		a, b = math.random(5, 20), math.random(2, 15)
-		op = "-"
-		correctAnswer = a - b
-	elseif Difficulty == "Hard" then
-		local ops = { "*", "/" }
-		op = ops[math.random(1, #ops)]
-		if op == "*" then
-			a, b = math.random(3, 12), math.random(3, 12)
-			correctAnswer = a * b
-		else
-			b = math.random(1, 10)
-			correctAnswer = math.random(1, 10)
-			a = correctAnswer * b
-			correctAnswer = a / b
-		end
-	end
-	QuestionLabel.Text = "What is " .. a .. " " .. op .. " " .. b .. "?"
-end
-
-Submit.MouseButton1Click:Connect(function()
-	local input = tonumber(AnswerBox.Text)
-	if not input then
-		QuestionLabel.Text = "❌ Enter a number!"
-		return
-	end
-
-	if math.floor(input) == math.floor(correctAnswer) then
-		QuestionLabel.Text = "✅ Correct! New Question..."
-		tries = 5
-		wait(1)
-		newQuestion()
-		AnswerBox.Text = ""
-	else
-		tries -= 1
-		if tries > 0 then
-			QuestionLabel.Text = "❌ Incorrect! Tries left: " .. tries
-		else
-			QuestionLabel.Text = "💀 Game Over! Restarting..."
-			tries = 5
-			wait(2)
-			newQuestion()
-			AnswerBox.Text = ""
-		end
-	end
-end)
-
--- Start first question
-newQuestion()
