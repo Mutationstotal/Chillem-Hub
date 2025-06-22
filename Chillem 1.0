@@ -1,0 +1,514 @@
+--[[ 
+    ⚠️ WARNING:
+    Do NOT select multiple mini games at once.
+    Let one finish before starting another to avoid glitches.
+--]]
+
+-- Load Orion Library
+local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/GRPGaming/Key-System/refs/heads/Xycer-Hub-Script/ZusumeLib(Slider)"))()
+
+-- Services
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
+local HttpService = game:GetService("HttpService")
+
+-- GUI Window
+local Window = OrionLib:MakeWindow({
+    Name = LocalPlayer.DisplayName .. "'s Chillem GUI ⚡️",
+    HidePremium = false,
+    SaveConfig = false,
+    ConfigFolder = "JackDarkGUI",
+    IntroText = "Welcome " .. LocalPlayer.DisplayName .. "!",
+    Theme = "Dark"
+})
+
+-- Load Infinite Yield
+loadstring(game:HttpGet("https://rawscripts.net/raw/Infinite-Yield_500"))()
+
+-- ESP
+local espEnabled = false
+local espTags = {}
+
+local function addESP(player)
+    if player == LocalPlayer then return end
+    local char = player.Character or player.CharacterAdded:Wait()
+    local torso = char:WaitForChild("LowerTorso", 5) or char:FindFirstChild("HumanoidRootPart")
+    if torso and not torso:FindFirstChild("ESP_Tag") then
+        local billboard = Instance.new("BillboardGui", torso)
+        billboard.Name = "ESP_Tag"
+        billboard.Size = UDim2.new(0, 100, 0, 25)
+        billboard.StudsOffset = Vector3.new(0, 2, 0)
+        billboard.AlwaysOnTop = true
+
+        local label = Instance.new("TextLabel", billboard)
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Text = player.DisplayName
+        label.TextColor3 = Color3.fromRGB(255, 0, 0)
+        label.Font = Enum.Font.SourceSansBold
+        label.TextSize = 20
+        label.TextStrokeTransparency = 0.2
+        label.TextStrokeColor3 = Color3.new(0, 0, 0)
+
+        espTags[player] = billboard
+    end
+end
+
+local function updateESP()
+    for _, v in pairs(espTags) do if v and v.Parent then v:Destroy() end end
+    espTags = {}
+    for _, p in ipairs(Players:GetPlayers()) do addESP(p) end
+end
+
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        if espEnabled then task.wait(1) addESP(player) end
+    end)
+end)
+
+--music
+local musicLibrary = {
+    ["🌮 It's Raining Tacos"] = "rbxassetid://142376088",
+    ["🎧 Chill Lofi"] = "rbxassetid://1846458016",
+    ["🎤 Rap Beat"] = "rbxassetid://133988484250262",
+    ["🎮 Phonk"] = "rbxassetid://132024343"
+}  
+
+local musicSound = nil
+local musicEnabled = false
+local selectedTrack = "🌮 It's Raining Tacos"
+local musicVolume = 1
+
+local function playMusic()
+    if not musicSound then
+        musicSound = Instance.new("Sound", SoundService)
+        musicSound.Name = "JackMusic"
+        musicSound.Looped = true
+    end
+    musicSound.SoundId = musicLibrary[selectedTrack]
+    musicSound.Volume = musicVolume
+    musicSound:Play()
+end
+
+local function stopMusic()
+    if musicSound then musicSound:Stop() end
+end
+
+-- 🌀 Commands Tab
+local CommandsTab = Window:MakeTab({ Name = "🌀 Commands", Icon = "rbxassetid://7734053499", PremiumOnly = false })
+
+CommandsTab:AddToggle({
+    Name = "🧠 Player ESP",
+    Default = false,
+    Callback = function(val)
+        espEnabled = val
+        if val then updateESP() else
+            for _, v in pairs(espTags) do if v and v.Parent then v:Destroy() end end
+        end
+    end
+})
+
+CommandsTab:AddToggle({
+    Name = "🎵 Toggle Music",
+    Default = false,
+    Callback = function(val)
+        musicEnabled = val
+        if val then playMusic() else stopMusic() end
+    end
+})
+
+CommandsTab:AddDropdown({
+    Name = "🎶 Select Music",
+    Default = selectedTrack,
+    Options = { "🌮 It's Raining Tacos", "🎧 Chill Lofi", "🎤 Rap Beat", "🎮 Pixel Beats" },
+    Callback = function(val)
+        selectedTrack = val
+        if musicEnabled then playMusic() end
+    end
+})
+
+CommandsTab:AddSlider({
+    Name = "🎚 Volume",
+    Min = 0, Max = 100, Default = 100,
+    Callback = function(v)
+        musicVolume = v / 100
+        if musicSound then musicSound.Volume = musicVolume end
+    end
+})
+
+-- ⚡ Hacks Tab
+local HacksTab = Window:MakeTab({ Name = "⚡ Regular Hacks", Icon = "rbxassetid://4483345998", PremiumOnly = false })
+
+HacksTab:AddSlider({
+    Name = "🏃 Walk Speed",
+    Min = 1, Max = 500, Default = 16,
+    Callback = function(val)
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = val
+        end
+    end
+})
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+    char:WaitForChild("Humanoid").WalkSpeed = 16
+end)
+
+-- 🎮 Mini Games Tab
+local GamesTab = Window:MakeTab({ Name = "🎮 Mini Games", Icon = "rbxassetid://7743878856", PremiumOnly = false })
+GamesTab:AddParagraph("📘 Tutorial", "To start, select a mini game from the dropdown below (Make sure to SAVE your SCORE).")
+GamesTab:AddParagraph("📌 Rules", "• Do NOT run multiple mini-games at once.\n• Finish the current game before starting another.\n• Scores will track your best attempts.")
+
+-- Score Tracking
+local scoreData = {
+    Clicks = 0,
+    FastestReaction = math.huge,
+    GuessTries = math.huge,
+    MathCorrect = 0
+}
+
+local display = GamesTab:AddParagraph("📋 Your Scores", "")
+local function updateDisplay()
+    display:Set(string.format("• Clicks: %d\n• Reaction Time: %s\n• Guess Tries: %s\n• Math Correct: %d",
+        scoreData.Clicks,
+        scoreData.FastestReaction ~= math.huge and scoreData.FastestReaction .. "ms" or "--",
+        scoreData.GuessTries ~= math.huge and scoreData.GuessTries or "--",
+        scoreData.MathCorrect))
+end
+updateDisplay()
+
+local miniGameRunning = false
+local function endGame() miniGameRunning = false end
+
+GamesTab:AddDropdown({
+    Name = "🎮 Select Mini Game",
+    Default = "None",
+    Options = { "None", "🖱 Click Speed Test", "🔢 Guess the Number", "⚡ Reaction Time", "🧮 Math Quiz" },
+    Callback = function(gameChoice)
+        if miniGameRunning then
+            OrionLib:MakeNotification({ Name = "Already Running", Content = "Wait for the current mini-game to finish.", Time = 4 })
+            return
+        end
+        miniGameRunning = true
+
+        if gameChoice == "🖱 Click Speed Test" then
+            local gui = Instance.new("ScreenGui", game.CoreGui)
+            gui.Name = "ClickSpeedTest"
+            local frame = Instance.new("Frame", gui)
+            frame.Size = UDim2.new(0, 250, 0, 150)
+            frame.Position = UDim2.new(0.5, -125, 0.5, -75)
+            frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+
+            local button = Instance.new("TextButton", frame)
+            button.Size = UDim2.new(1, 0, 0.6, 0)
+            button.Text = "Click Me!"
+            button.Font = Enum.Font.GothamBold
+            button.TextSize = 22
+            button.TextColor3 = Color3.new(1,1,1)
+            button.BackgroundColor3 = Color3.fromRGB(100,100,100)
+
+            local label = Instance.new("TextLabel", frame)
+            label.Size = UDim2.new(1, 0, 0.4, 0)
+            label.Position = UDim2.new(0, 0, 0.6, 0)
+            label.BackgroundTransparency = 1
+            label.Font = Enum.Font.Gotham
+            label.TextColor3 = Color3.new(1,1,1)
+            label.TextSize = 18
+            label.Text = "Click for 10 seconds!"
+
+            local clicks, running = 0, true
+            button.MouseButton1Click:Connect(function() if running then clicks += 1 end end)
+            task.delay(10, function()
+                running = false
+                label.Text = "You clicked " .. clicks .. " times!"
+                if clicks > scoreData.Clicks then scoreData.Clicks = clicks updateDisplay() end
+                task.wait(3)
+                gui:Destroy()
+                endGame()
+            end)
+
+        elseif gameChoice == "🔢 Guess the Number" then
+            local number = math.random(1, 10)
+            local attempts = 3
+            OrionLib:MakeNotification({Name = "Guess", Content = "Guess a number (1–10) in chat.", Time = 5})
+            local conn
+            conn = LocalPlayer.Chatted:Connect(function(msg)
+                local guess = tonumber(msg)
+                if not guess then return end
+                if guess == number then
+                    OrionLib:MakeNotification({Name = "✅ Correct!", Content = "You guessed it!", Time = 3})
+                    if 4 - attempts < scoreData.GuessTries then scoreData.GuessTries = 4 - attempts updateDisplay() end
+                    conn:Disconnect() endGame()
+                else
+                    attempts -= 1
+                    if attempts == 0 then
+                        OrionLib:MakeNotification({Name = "❌ Out of Tries", Content = "It was " .. number, Time = 3})
+                        conn:Disconnect() endGame()
+                    else
+                        OrionLib:MakeNotification({Name = "❗ Try Again", Content = "Tries left: " .. attempts, Time = 2})
+                    end
+                end
+            end)
+
+        elseif gameChoice == "⚡ Reaction Time" then
+            local gui = Instance.new("ScreenGui", game.CoreGui)
+            gui.Name = "ReactionTime"
+            local frame = Instance.new("Frame", gui)
+            frame.Size = UDim2.new(0, 300, 0, 200)
+            frame.Position = UDim2.new(0.5, -150, 0.5, -100)
+            frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+
+            local button = Instance.new("TextButton", frame)
+            button.Size = UDim2.new(1, 0, 1, 0)
+            button.Text = "Wait for Green..."
+            button.Font = Enum.Font.GothamBold
+            button.TextSize = 24
+            button.TextColor3 = Color3.new(1,1,1)
+            button.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+
+            task.delay(math.random(2, 5), function()
+                local start = tick()
+                button.Text = "CLICK!"
+                button.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+                button.MouseButton1Click:Connect(function()
+                    local reaction = math.floor((tick() - start) * 1000)
+                    button.Text = "Time: " .. reaction .. "ms"
+                    if reaction < scoreData.FastestReaction then
+                        scoreData.FastestReaction = reaction
+                        updateDisplay()
+                    end
+                    task.wait(3)
+                    gui:Destroy()
+                    endGame()
+                end)
+            end)
+
+        elseif gameChoice == "🧮 Math Quiz" then
+    local function startMathQuiz(difficulty)
+        local a, b = 0, 0
+        local question, answer
+
+        if difficulty == "Easy" then
+            a, b = math.random(1, 10), math.random(1, 10)
+            question = a .. " + " .. b
+            answer = a + b
+        elseif difficulty == "Medium" then
+            a, b = math.random(1, 25), math.random(1, 25)
+            if math.random(1,2) == 1 then
+                question = a .. " + " .. b
+                answer = a + b
+            else
+                question = a .. " - " .. b
+                answer = a - b
+            end
+        elseif difficulty == "Hard" then
+            a, b = math.random(1, 50), math.random(1, 10)
+            local op = math.random(1, 3)
+            if op == 1 then
+                question = a .. " + " .. b
+                answer = a + b
+            elseif op == 2 then
+                question = a .. " - " .. b
+                answer = a - b
+            else
+                question = a .. " × " .. b
+                answer = a * b
+            end
+        end
+
+        OrionLib:MakeNotification({Name = "Math", Content = "What is " .. question .. "?", Time = 6})
+        local conn
+        conn = LocalPlayer.Chatted:Connect(function(msg)
+            if tonumber(msg) == answer then
+                OrionLib:MakeNotification({Name = "✅ Correct!", Content = "Nice job!", Time = 3})
+                scoreData.MathCorrect += 1
+                updateDisplay()
+                conn:Disconnect()
+
+                -- Replay prompt
+                local gui = Instance.new("ScreenGui", game.CoreGui)
+                gui.Name = "MathReplayPrompt"
+                local frame = Instance.new("Frame", gui)
+                frame.Size = UDim2.new(0, 300, 0, 150)
+                frame.Position = UDim2.new(0.5, -150, 0.5, -75)
+                frame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+
+                local label = Instance.new("TextLabel", frame)
+                label.Size = UDim2.new(1, 0, 0.4, 0)
+                label.Position = UDim2.new(0, 0, 0, 0)
+                label.BackgroundTransparency = 1
+                label.Font = Enum.Font.GothamBold
+                label.Text = "Play Again?"
+                label.TextColor3 = Color3.new(1, 1, 1)
+                label.TextSize = 22
+
+                local yes = Instance.new("TextButton", frame)
+                yes.Size = UDim2.new(0.4, 0, 0.4, 0)
+                yes.Position = UDim2.new(0.1, 0, 0.5, 0)
+                yes.Text = "Yes"
+                yes.Font = Enum.Font.Gotham
+                yes.TextSize = 20
+                yes.TextColor3 = Color3.new(1,1,1)
+                yes.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+
+                local no = Instance.new("TextButton", frame)
+                no.Size = UDim2.new(0.4, 0, 0.4, 0)
+                no.Position = UDim2.new(0.5, 0, 0.5, 0)
+                no.Text = "No"
+                no.Font = Enum.Font.Gotham
+                no.TextSize = 20
+                no.TextColor3 = Color3.new(1,1,1)
+                no.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+
+                yes.MouseButton1Click:Connect(function()
+                    gui:Destroy()
+                    startMathQuiz(difficulty)
+                end)
+
+                no.MouseButton1Click:Connect(function()
+                    gui:Destroy()
+                    endGame()
+                end)
+            else
+                OrionLib:MakeNotification({Name = "❌ Wrong", Content = "Try again!", Time = 2})
+            end
+        end)
+    end
+
+    -- Difficulty selection GUI
+    local gui = Instance.new("ScreenGui", game.CoreGui)
+    gui.Name = "DifficultyPrompt"
+    local frame = Instance.new("Frame", gui)
+    frame.Size = UDim2.new(0, 300, 0, 170)
+    frame.Position = UDim2.new(0.5, -150, 0.5, -85)
+    frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+
+    local title = Instance.new("TextLabel", frame)
+    title.Size = UDim2.new(1, 0, 0.3, 0)
+    title.Position = UDim2.new(0, 0, 0, 0)
+    title.Text = "Select Difficulty"
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 24
+    title.TextColor3 = Color3.new(1, 1, 1)
+    title.BackgroundTransparency = 1
+
+    local function createDiffBtn(text, y, callback)
+        local btn = Instance.new("TextButton", frame)
+        btn.Size = UDim2.new(0.8, 0, 0.2, 0)
+        btn.Position = UDim2.new(0.1, 0, y, 0)
+        btn.Text = text
+        btn.Font = Enum.Font.Gotham
+        btn.TextSize = 20
+        btn.TextColor3 = Color3.new(1,1,1)
+        btn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+        btn.MouseButton1Click:Connect(function()
+            gui:Destroy()
+            startMathQuiz(text)
+        end)
+    end
+
+    createDiffBtn("Easy", 0.35)
+    createDiffBtn("Medium", 0.58)
+    createDiffBtn("Hard", 0.81)elseif gameChoice == "🧮 Math Quiz" then
+    local function startMathQuiz()
+        local a, b = math.random(1, 20), math.random(1, 20)
+        OrionLib:MakeNotification({Name = "Math", Content = "What is " .. a .. " + " .. b .. "?", Time = 6})
+        local conn
+        conn = LocalPlayer.Chatted:Connect(function(msg)
+            if tonumber(msg) == a + b then
+                OrionLib:MakeNotification({Name = "✅ Correct!", Content = "Nice job!", Time = 3})
+                scoreData.MathCorrect += 1
+                updateDisplay()
+                conn:Disconnect()
+
+                -- Prompt for replay
+                local gui = Instance.new("ScreenGui", game.CoreGui)
+                gui.Name = "MathQuizReplayPrompt"
+                local frame = Instance.new("Frame", gui)
+                frame.Size = UDim2.new(0, 300, 0, 150)
+                frame.Position = UDim2.new(0.5, -150, 0.5, -75)
+                frame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+                frame.BorderSizePixel = 0
+
+                local label = Instance.new("TextLabel", frame)
+                label.Size = UDim2.new(1, 0, 0.4, 0)
+                label.Position = UDim2.new(0, 0, 0, 0)
+                label.BackgroundTransparency = 1
+                label.Font = Enum.Font.GothamBold
+                label.Text = "Play Again?"
+                label.TextColor3 = Color3.new(1, 1, 1)
+                label.TextSize = 22
+
+                local yes = Instance.new("TextButton", frame)
+                yes.Size = UDim2.new(0.4, 0, 0.4, 0)
+                yes.Position = UDim2.new(0.1, 0, 0.5, 0)
+                yes.Text = "Yes"
+                yes.Font = Enum.Font.Gotham
+                yes.TextSize = 20
+                yes.TextColor3 = Color3.new(1,1,1)
+                yes.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+
+                local no = Instance.new("TextButton", frame)
+                no.Size = UDim2.new(0.4, 0, 0.4, 0)
+                no.Position = UDim2.new(0.5, 0, 0.5, 0)
+                no.Text = "No"
+                no.Font = Enum.Font.Gotham
+                no.TextSize = 20
+                no.TextColor3 = Color3.new(1,1,1)
+                no.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+
+                yes.MouseButton1Click:Connect(function()
+                    gui:Destroy()
+                    startMathQuiz()
+                end)
+
+                no.MouseButton1Click:Connect(function()
+                    gui:Destroy()
+                    endGame()
+                end)
+            else
+                OrionLib:MakeNotification({Name = "❌ Wrong", Content = "Try again!", Time = 2})
+            end
+        end)
+    end
+
+    startMathQuiz()elseif gameChoice == "🧮 Math Quiz" then
+            local a, b = math.random(1, 20), math.random(1, 20)
+            OrionLib:MakeNotification({Name = "Math", Content = "What is " .. a .. " + " .. b .. "?", Time = 6})
+            local conn
+            conn = LocalPlayer.Chatted:Connect(function(msg)
+                if tonumber(msg) == a + b then
+                    OrionLib:MakeNotification({Name = "✅ Correct!", Content = "Nice job!", Time = 3})
+                    scoreData.MathCorrect += 1
+                    updateDisplay()
+                    conn:Disconnect()
+                    endGame()
+                else
+                    OrionLib:MakeNotification({Name = "❌ Wrong", Content = "Try again!", Time = 2})
+                end
+            end)
+        else
+            endGame()
+        end
+    end
+})GamesTab:AddButton({
+    Name = "💾 Save Scores",
+    Callback = function()
+        local data = HttpService:JSONEncode(scoreData)
+        writefile("ChillemScores.json", data)
+        OrionLib:MakeNotification({
+            Name = "Saved!",
+            Content = "Your scores have been saved successfully.",
+            Time = 3
+        })
+    end
+})if isfile("ChillemScores.json") then
+    local success, saved = pcall(function()
+        return HttpService:JSONDecode(readfile("ChillemScores.json"))
+    end)
+    if success and typeof(saved) == "table" then
+        scoreData = saved
+    end
+end
+updateDisplay()
