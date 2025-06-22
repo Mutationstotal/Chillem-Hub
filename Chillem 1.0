@@ -418,12 +418,18 @@ end
 updateDisplay()
 
 
--- Math Quiz GUI with Difficulty, Answer Box, and Exit Button
+-- Check if another game is running
+if _G.MiniGameRunning then
+	warn("You must finish your current mini-game first!")
+	return
+end
+_G.MiniGameRunning = true
 
+-- Math Quiz GUI
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- GUI Container
+-- GUI Setup
 local ScreenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
 ScreenGui.Name = "MathQuizGUI"
 ScreenGui.ResetOnSpawn = false
@@ -455,6 +461,7 @@ ExitButton.TextSize = 18
 ExitButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 ExitButton.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
 ExitButton.MouseButton1Click:Connect(function()
+	_G.MiniGameRunning = false
 	ScreenGui:Destroy()
 end)
 
@@ -507,7 +514,7 @@ local correctAnswer = nil
 local difficulties = { "Easy", "Medium", "Hard" }
 local currentDiffIndex = 1
 
--- Dropdown Click Logic
+-- Difficulty cycling
 Dropdown.MouseButton1Click:Connect(function()
 	currentDiffIndex += 1
 	if currentDiffIndex > #difficulties then currentDiffIndex = 1 end
@@ -515,7 +522,7 @@ Dropdown.MouseButton1Click:Connect(function()
 	Dropdown.Text = "🎯 Difficulty: " .. Difficulty
 end)
 
--- Generate Questions
+-- Question Generator
 local function newQuestion()
 	local a, b, op
 	if Difficulty == "Easy" then
@@ -542,7 +549,7 @@ local function newQuestion()
 	QuestionLabel.Text = "What is " .. a .. " " .. op .. " " .. b .. "?"
 end
 
--- Submit Handler
+-- Submit Answer
 Submit.MouseButton1Click:Connect(function()
 	local input = tonumber(AnswerBox.Text)
 	if not input then
@@ -570,5 +577,5 @@ Submit.MouseButton1Click:Connect(function()
 	end
 end)
 
--- First question on load
+-- Start Quiz
 newQuestion()
